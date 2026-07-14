@@ -1,0 +1,33 @@
+# Конфигурация сервера Hysteria 2
+
+# Порт, на котором сервер слушает входящие UDP соединения
+listen: :443
+
+# Настройки TLS шифрования
+tls:
+  # Вариант 1: Использование самоподписанного сертификата (просто и надежно, не требует домена)
+  cert: /etc/hysteria/server.crt
+  key: /etc/hysteria/server.key
+
+  # Вариант 2: Автоматическое получение SSL от Let's Encrypt (требуется домен, направленный на IP сервера)
+  # acme:
+  #   domains:
+  #     - yourdomain.com
+  #   email: admin@yourdomain.com
+
+# Авторизация клиентов
+auth:
+  type: password
+  password: your_very_secure_password_here
+
+# Маскировка сервера (при обращении обычным HTTP/HTTPS запросом сервер прикинется указанным сайтом)
+masquerade:
+  type: proxy
+  proxy:
+    url: https://www.microsoft.com
+    rewriteHost: true
+
+# Ограничение скоростей для клиентов (опционально, в байтах/сек или мегабитах: 100 Mbps)
+# bandwidth:
+#   up: 100 mbps
+#   down: 100 mbps

@@ -1,0 +1,29 @@
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# Docker
+.docker/
+
+# Temp files
+*.tmp
+*.log
+
+# Personal VPN/Warp/VLESS configs (must not be committed by users)
+/vless/config.json
+/hysteria2/config.yaml
+/hysteria2/server.yaml
+/hysteria2/client.yaml
+/warp/*.conf
+/warp/*.json
+/vpn/*.conf
+/vpn/*.json
