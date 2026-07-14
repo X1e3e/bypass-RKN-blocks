@@ -11,17 +11,17 @@
 ```mermaid
 graph TD
     subgraph "Управление (Панель)"
-        Admin["👤 Администратор"] -->|Управление через Web-UI| Panel["🖥️ Remnawave Panel<br>(Docker: Backend + Postgres + Valkey)"]
+        Admin["👤 Администратор"]  -- "Управление через Web-UI" --> Panel["🖥️ Remnawave Panel<br>(Docker: Backend + Postgres + Valkey)"]
     end
 
     subgraph "Трафик (Серверы / Ноды)"
-        Panel -->|1. Pushes configs via API<br>(mTLS / JWT)| Node1["🌐 Node Server 1 (Германия)<br>(Docker: Remnawave Node + Xray-core)"]
-        Panel -.->|1. Pushes configs| Node2["🌐 Node Server 2 (Нидерланды)<br>(Docker: Remnawave Node + Xray-core)"]
+        Panel  -- "1. Pushes configs via API<br>(mTLS / JWT)" --> Node1["🌐 Node Server 1 (Германия)<br>(Docker: Remnawave Node + Xray-core)"]
+        Panel  -. "1. Pushes configs" .-> Node2["🌐 Node Server 2 (Нидерланды)<br>(Docker: Remnawave Node + Xray-core)"]
     end
 
     subgraph "Потребители (Клиенты)"
-        Client["📱 Устройства (Клиенты)<br>(iOS, Android, Win, Mac, Router)"] -->|2. Скачивание подписки| Panel
-        Client -->|3. Прокси-трафик (VLESS Reality)| Node1
+        Client["📱 Устройства (Клиенты)<br>(iOS, Android, Win, Mac, Router)"]  -- "2. Скачивание подписки" --> Panel
+        Client  -- "3. Прокси-трафик (VLESS Reality)" --> Node1
     end
 
     style Admin fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
