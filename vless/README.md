@@ -8,28 +8,7 @@
 
 ## 📐 Архитектура системы (Наглядно)
 
-```mermaid
-graph TD
-    subgraph "Управление (Панель)"
-        Admin["👤 Администратор"]  -- "Управление через Web-UI" --> Panel["🖥️ Remnawave Panel<br>(Docker: Backend + Postgres + Valkey)"]
-    end
-
-    subgraph "Трафик (Серверы / Ноды)"
-        Panel  -- "1. Pushes configs via API<br>(mTLS / JWT)" --> Node1["🌐 Node Server 1 (Германия)<br>(Docker: Remnawave Node + Xray-core)"]
-        Panel  -. "1. Pushes configs" .-> Node2["🌐 Node Server 2 (Нидерланды)<br>(Docker: Remnawave Node + Xray-core)"]
-    end
-
-    subgraph "Потребители (Клиенты)"
-        Client["📱 Устройства (Клиенты)<br>(iOS, Android, Win, Mac, Router)"]  -- "2. Скачивание подписки" --> Panel
-        Client  -- "3. Прокси-трафик (VLESS Reality)" --> Node1
-    end
-
-    style Admin fill:#e1f5fe,stroke:#039be5,stroke-width:2px;
-    style Panel fill:#e8f5e9,stroke:#43a047,stroke-width:2px;
-    style Node1 fill:#fff3e0,stroke:#fb8c00,stroke-width:2px;
-    style Node2 fill:#fff3e0,stroke:#fb8c00,stroke-width:1px,stroke-dasharray: 5 5;
-    style Client fill:#f3e5f5,stroke:#8e24aa,stroke-width:2px;
-```
+![Схема архитектуры Remnawave](../images/architecture.png)
 
 ---
 
