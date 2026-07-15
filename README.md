@@ -90,5 +90,4 @@
 4. **[`/warp`](./warp/)** — создание бесплатного и безлимитного туннеля Cloudflare Warp с обходом блокировки по протоколу WireGuard с помощью AmneziaWG.
 5. **[`/vpn`](./vpn/)** — классический сервер AmneziaWG для шифрования всего трафика через собственную VPS.
 6. **[`theory.md`](./theory.md)** — теоретические основы работы ТСПУ/DPI, подробное описание принципов обхода блокировок и анализ причин сбоев каждого метода.
-7. **[](./vless/bedolaga-chat-analysis.md)** — Анализ реального опыта, багов и лайфхаков операторов VPN (хостинги, баги Remnawave, фиксы Hysteria 2 и обходы БС) из закрытого чата *Bedolaga Social Club*.
-7. **[vless/bedolaga-chat-analysis.md](./vless/bedolaga-chat-analysis.md)** — Анализ реального опыта, багов и лайфхаков операторов VPN (хостинги, баги Remnawave, фиксы Hysteria 2 и обходы БС) из закрытого чата *Bedolaga Social Club*.
+7. **[`vless/advanced-remnawave.md`](./vless/advanced-remnawave.md)** — Руководство по продвинутой настройке панели Remnawave, веб-серверов Caddy/Nginx (реверс-прокси), ручному обновлению Xray-ядер в нодах и настройке xPadding обфускации.
