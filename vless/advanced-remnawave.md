@@ -13,6 +13,10 @@
 ```bash
 bash <(wget -qO- https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh)
 ```
+*Если на сервере возникают проблемы со скачиванием через wget, используйте альтернативный запуск с логированием процесса установки в файл:*
+```bash
+bash -x <(curl -4 -Ls https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-proxy/refs/heads/main/install_remnawave.sh | sed 's/wget -q -O/curl -4 -Ls -o/g') 2>&1 | tee install.log
+```
 
 ### Nginx vs Caddy (Проблема с сокетами)
 *   **Симптом:** При использовании Nginx в качестве реверс-прокси перед Xray нодами в логах контейнера Nginx (`docker logs remnawave-nginx`) возникают частые ошибки обрыва сокетов (`connection reset`).
@@ -130,5 +134,82 @@ bash <(wget -qO- https://raw.githubusercontent.com/eGamesAPI/remnawave-reverse-p
 *   Трафик к этим подсетям не режется и не блокируется даже при жестких фильтрах. При аренде MWS рекомендуется запрашивать выдачу IP-адресов именно из этих диапазонов.
 
 ### Оптимизация зарубежного трафика на Aeza RU
-*   При покупке VPS в РФ от Aeza ( Ryzen 9 9950X, диапазон IP: `83.147.255.0/24`) для использования в качестве транзитного прокси, доступ к заблокированным ресурсам на самом сервере настраивается через Cloudflare Warp.
+*   При покупке VPS в РФ от Aeza (Ryzen 9 9950X, диапазон IP: `83.147.255.0/24`) для использования в качестве транзитного прокси, доступ к заблокированным ресурсам на самом сервере настраивается через Cloudflare Warp.
 *   Утилита `warp-native` ставится на сервера Aeza с локацией в РФ без ошибок и обеспечивает стабильный транзит трафика за рубеж.
+
+---
+
+## 5. 🛠️ Диагностика, тестирование и обслуживание системы
+
+Ниже собраны основные терминальные команды и процедуры для администрирования, тестирования и траблшутинга серверов.
+
+### 📶 Отключение IPv6 на хост-серверах (Лечение таймаутов)
+Многие российские хостинги имеют некорректную маршрутизацию IPv6, что вызывает задержки при установлении соединений (таймауты) в Xray/Reality. Для полного отключения IPv6 на VPS выполните:
+```bash
+cat << 'EOF' > /etc/sysctl.d/99-disable-ipv6.conf
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+EOF
+sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="/&ipv6.disable=1 /' /etc/default/grub
+update-grub
+sed -i 's/#AddressFamily any/AddressFamily inet/' /etc/ssh/sshd_config
+systemctl restart ssh
+```
+
+### 🛰️ Проверка геолокации IP-адреса сервером Google
+Для проверки, под какой страной Google видит ваш сервер (важно для проверки работы Warp-маршрутизации и обхода региональных ограничений):
+```bash
+curl -4 -s --user-agent "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0" https://www.google.com | sed -n 's/.*"[a-z]\{2\}_\([A-Z]\{2\}\)".*/\1/p'
+```
+*(Команда вернет двухбуквенный код страны, например: `US`, `DE`, `NL`)*.
+
+### 🌐 Базовая проверка доступности порта и TLS-рукопожатия ноды
+Для проверки успешного прохождения TCP-соединения и сверки SSL-сертификата (позволяет быстро локализовать блокировку порта на ТСПУ без отправки mTLS ключей Remnawave):
+```bash
+curl -v --connect-timeout 5 https://<IP_АДРЕС_НОДЫ>:443 -k
+```
+> [!IMPORTANT]
+> Сама нода Remnawave защищена mTLS, поэтому при обычном curl-запросе соединение должно выдавать ошибку SSL-рукопожатия со стороны сервера (это штатное поведение защиты от сканирования). Но эта команда подтверждает, что порт открыт и отвечает.
+
+### 🔄 Обслуживание и обновление контейнеров панели
+*   **Полное обновление панели и баз данных:**
+    ```bash
+    cd /opt/remnawave && docker compose pull && docker compose down && docker compose up -d && docker compose logs -f
+    ```
+*   **Обновление только страницы подписок (Subscription Page):**
+    ```bash
+    cd /opt/remnawave && docker compose pull remnawave-subscription-page && docker compose down remnawave-subscription-page && docker compose up -d remnawave-subscription-page && docker compose logs -f remnawave-subscription-page
+    ```
+*   **Обновление ноды (RemnaNode):**
+    ```bash
+    cd /opt/remnanode && docker compose pull && docker compose down && docker compose up -d && docker compose logs -f
+    ```
+
+### ⏰ Исправление зависания нод в Cron (SSL Renew Bug)
+По умолчанию скрипты автоматической настройки реверс-прокси создают cron-задачу для еженедельного обновления SSL. В исходных скриптах используется грубая команда перезапуска:
+`docker compose down && docker compose up`
+Это приводит к полному отключению панели и всех нод каждое воскресенье в 5:00 утра.
+*   **Исправление:** Откройте crontab (`crontab -e`) и замените полную остановку контейнеров на мягкий перезапуск веб-сервера Nginx/Caddy (без отключения бэкенда):
+    ```cron
+    0 5 * * 0 ufw allow 80 && /usr/bin/certbot renew --quiet && ufw delete allow 80 && ufw reload && cd /opt/remnawave && docker compose restart nginx
+    ```
+
+### 🔑 Тестирование API Remnawave (Добавление пользователя через curl)
+Для ручной проверки работы API бэкенда панели или автоматизации выдачи ключей:
+```bash
+curl -X POST https://panel.yourdomain.com/api/users \
+  -H "Cookie: Cookie=Cookie" \
+  -H "Authorization: Bearer ВАШ_API_ТОКЕН" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "TestUser",
+    "uuid": "сгенерированный-uuid-клиента",
+    "shortUuid": "короткий-id",
+    "expireAt": "2026-12-31T23:59:59.999Z",
+    "status": "ACTIVE",
+    "trafficLimitBytes": 107374182400,
+    "trafficLimitStrategy": "NO_RESET"
+  }'
+```
