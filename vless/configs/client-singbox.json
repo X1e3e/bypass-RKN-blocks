@@ -1,0 +1,78 @@
+{
+  "log": {
+    "level": "warn"
+  },
+  "inbounds": [
+    {
+      "type": "socks",
+      "tag": "socks-in",
+      "listen": "127.0.0.1",
+      "listen_port": 10808,
+      "sniff": true
+    },
+    {
+      "type": "http",
+      "tag": "http-in",
+      "listen": "127.0.0.1",
+      "listen_port": 10809
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "vless",
+      "tag": "proxy",
+      "server": "<ВАШ_IP_ИЛИ_ДОМЕН_VPS>",
+      "server_port": 443,
+      "uuid": "<ВАШ_UUID_КЛИЕНТА>",
+      "flow": "xtls-rprx-vision",
+      "tls": {
+        "enabled": true,
+        "server_name": "<ДОМЕН_МАСКИРОВКИ_SNI>",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        },
+        "reality": {
+          "enabled": true,
+          "public_key": "<ВАШ_PUBLIC_KEY_ИЗ_ПАНЕЛИ>",
+          "short_id": "<ВАШ_SHORT_ID_HEX>"
+        }
+      },
+      "transport": {
+        "type": "tcp"
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ],
+  "route": {
+    "rules": [
+      {
+        "ip_is_private": true,
+        "outbound": "direct"
+      },
+      {
+        "geoip": [
+          "ru"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geosite": [
+          "ru"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "outbound": "proxy"
+      }
+    ],
+    "auto_detect_interface": true
+  }
+}

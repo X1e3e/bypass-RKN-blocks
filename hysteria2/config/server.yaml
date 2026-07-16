@@ -27,6 +27,12 @@ masquerade:
     url: https://www.microsoft.com
     rewriteHost: true
 
+# Обфускация трафика (защита от активного сканирования и сигнатурного анализа)
+obfs:
+  type: salamander
+  salamander:
+    password: your_obfs_shared_password_here
+
 # Ограничение скоростей для клиентов (опционально, в байтах/сек или мегабитах: 100 Mbps)
 # bandwidth:
 #   up: 100 mbps
